@@ -144,12 +144,9 @@ class Application {
     }
 
     this.#workouts.push(workout);
-
     this.#displayWorkoutOnList(workout);
-
+    this.#displayWorkoutMarkerOnMap(workout);
     this.#hideForm();
-
-    console.log(workout);
   }
 
   #displayWorkoutOnList(workout) {
@@ -201,6 +198,22 @@ class Application {
     }
 
     form.insertAdjacentHTML("afterend", html);
+  }
+
+  #displayWorkoutMarkerOnMap(workout) {
+    L.marker(workout.coordinates)
+      .addTo(this.#map)
+      .bindPopup(
+        L.popup({
+          maxWidth: 250,
+          minWidth: 100,
+          autoClose: false,
+          closeOnClick: false,
+          className: `${workout.type}--popup`,
+        })
+      )
+      .setPopupContent(`${workout.type === "running" ? "🏃‍♂️" : "🚴‍♀️"} ${workout.title}`)
+      .openPopup();
   }
 }
 
