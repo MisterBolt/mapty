@@ -64,11 +64,17 @@ class Cycling extends Workout {
 }
 
 ////////////////////---------- APPLICATION LOGIC ----------\\\\\\\\\\\\\\\\\\\\
+
 class Application {
   #map;
+  #mapEvent;
+  #workouts = [];
 
   constructor() {
     this.#getCurrentPosition();
+
+    inputType.addEventListener("change", this.#toggleElevationAndCadenceField);
+    form.addEventListener("submit", this.#addWorkout.bind(this));
   }
 
   #getCurrentPosition() {
@@ -87,6 +93,58 @@ class Application {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(this.#map);
+
+    this.#map.on("click", this.#showForm.bind(this));
+  }
+
+  #showForm(mapEvent) {
+    this.#mapEvent = mapEvent;
+    form.classList.remove("hidden");
+    inputDistance.focus();
+  }
+
+  #hideForm() {
+    inputDistance.value = inputDuration.value = inputElevation.value = inputCadence.value = "";
+    form.classList.add("hidden");
+  }
+
+  #toggleElevationAndCadenceField() {
+    inputCadence.closest(".form__row").classList.toggle("form__row--hidden");
+    inputElevation.closest(".form__row").classList.toggle("form__row--hidden");
+  }
+
+  #addWorkout(e) {
+    e.preventDefault();
+
+    const checkPositiveInputs = (...inputs) => inputs.every(input => input > 0);
+
+    const type = inputType.value;
+    const distance = Number(inputDistance.value);
+    const duration = Number(inputDuration.value);
+    const { lat, lng } = this.#mapEvent.latlng;
+    let workout;
+
+    if (type === "running") {
+      const cadence = Number(inputCadence.value);
+
+      if (checkPositiveInputs(distance, duration, cadence))
+        workout = new Running(distance, duration, [lat, lng], cadence);
+      else return alert("Inputs have to be positive numbers!");
+    }
+
+    if (type === "cycling") {
+      const elevation = Number(inputElevation.value);
+
+      if (checkPositiveInputs(distance, duration) && Number.isFinite(elevation))
+        workout = new Cycling(distance, duration, [lat, lng], elevation);
+      else return alert("Inputs have to be positive numbers!");
+    }
+
+    this.#workouts.push(workout);
+
+    this.#hideForm();
+
+    console.log(workout);
   }
 }
 
