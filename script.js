@@ -62,3 +62,32 @@ class Cycling extends Workout {
     this.speed = this.distance / (this.duration / 60);
   }
 }
+
+////////////////////---------- APPLICATION LOGIC ----------\\\\\\\\\\\\\\\\\\\\
+class Application {
+  #map;
+
+  constructor() {
+    this.#getCurrentPosition();
+  }
+
+  #getCurrentPosition() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(this.#loadMap.bind(this), function () {
+        alert("You need to accept location sharing");
+      });
+    }
+  }
+
+  #loadMap(position) {
+    const { latitude, longitude } = position.coords;
+
+    this.#map = L.map("map").setView([latitude, longitude], 13);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(this.#map);
+  }
+}
+
+new Application();
