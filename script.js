@@ -73,6 +73,7 @@ class Application {
 
   constructor() {
     this.#getCurrentPosition();
+    this.#getLocalStorage();
 
     inputType.addEventListener("change", this.#toggleElevationAndCadenceField);
     form.addEventListener("submit", this.#addWorkout.bind(this));
@@ -97,6 +98,8 @@ class Application {
     }).addTo(this.#map);
 
     this.#map.on("click", this.#showForm.bind(this));
+
+    this.#workouts.forEach(workout => this.#displayWorkoutMarkerOnMap(workout));
   }
 
   #showForm(mapEvent) {
@@ -149,6 +152,7 @@ class Application {
     this.#displayWorkoutOnList(workout);
     this.#displayWorkoutMarkerOnMap(workout);
     this.#hideForm();
+    this.#setLocalStorage();
   }
 
   #displayWorkoutOnList(workout) {
@@ -211,7 +215,7 @@ class Application {
           minWidth: 100,
           autoClose: false,
           closeOnClick: false,
-          className: `${workout.type}--popup`,
+          className: `${workout.type}-popup`,
         })
       )
       .setPopupContent(`${workout.type === "running" ? "🏃‍♂️" : "🚴‍♀️"} ${workout.title}`)
@@ -226,6 +230,45 @@ class Application {
     const workout = this.#workouts.find(workout => workout.id === +workoutElement.dataset.id);
 
     this.#map.setView(workout.coordinates, this.#mapZoom, { animate: true, duration: 1 });
+  }
+
+  #setLocalStorage() {
+    localStorage.setItem("workouts", JSON.stringify(this.#workouts));
+  }
+
+  #getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem("workouts"));
+
+    if (!data) return;
+
+    data.forEach(workout => {
+      const convertedWorkout = this.#convertFromJSONToObject(workout);
+
+      this.#workouts.push(convertedWorkout);
+      this.#displayWorkoutOnList(convertedWorkout);
+    });
+  }
+
+  #convertFromJSONToObject(workout) {
+    let convertedWorkout;
+
+    if (workout.type === "running") {
+      convertedWorkout = new Running(workout.distance, workout.duration, workout.coordinates, workout.cadence);
+    }
+
+    if (workout.type === "cycling") {
+      convertedWorkout = new Cycling(workout.distance, workout.duration, workout.coordinates, workout.elevation);
+    }
+
+    convertedWorkout.id = workout.id;
+    convertedWorkout.title = workout.title;
+
+    return convertedWorkout;
+  }
+
+  reset() {
+    localStorage.removeItem("workouts");
+    location.reload();
   }
 }
 
